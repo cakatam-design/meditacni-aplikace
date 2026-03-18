@@ -405,24 +405,6 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         });
     }
 
-    // ========== STREAK DISPLAY ==========
-
-    function updateStreakDisplay() {
-        const stats = loadStats();
-        const today = new Date().toISOString().split('T')[0];
-        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-        let currentStreak = stats.streak || 0;
-
-        // If last session wasn't today or yesterday, streak is broken
-        if (stats.lastDate && stats.lastDate !== today && stats.lastDate !== yesterday) {
-            currentStreak = 0;
-        }
-
-        const label = currentStreak === 1 ? 'den' :
-                      (currentStreak >= 2 && currentStreak <= 4) ? 'dny' : 'dní';
-        $('#streakCount').textContent = `${currentStreak} ${label} v řadě`;
-    }
-
     // ========== MEDITATION FLOW ==========
 
     function startMeditation() {
@@ -859,7 +841,7 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         clearManualAdvance();
         releaseWakeLock();
         showScreen('home');
-        updateStreakDisplay();
+
     }
 
     function skipPhase() {
@@ -972,7 +954,7 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
             const confirmed = await showConfirm('Opravdu vynulovat všechny statistiky?');
             if (confirmed) {
                 localStorage.removeItem('kum-stats');
-                updateStreakDisplay();
+        
             }
         });
     }
@@ -1023,7 +1005,7 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         $('#btnBackFromAbout').addEventListener('click', () => showScreen('home'));
         $('#btnBackHome').addEventListener('click', () => {
             showScreen('home');
-            updateStreakDisplay();
+    
         });
 
         // Meditation controls
@@ -1077,7 +1059,7 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         updatePresetButtons();
         updateBowCountButtons();
         updateBowSpeedButtons();
-        updateStreakDisplay();
+
         initSettingsUI();
         initEvents();
         initSplash();
