@@ -233,6 +233,38 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
     const $ = (sel) => document.querySelector(sel);
     const $$ = (sel) => document.querySelectorAll(sel);
 
+    // ========== CUSTOM CONFIRM ==========
+
+    function showConfirm(message) {
+        return new Promise((resolve) => {
+            const overlay = $('#modalOverlay');
+            const msgEl = $('#modalMessage');
+            const btnConfirm = $('#modalConfirm');
+            const btnCancel = $('#modalCancel');
+
+            msgEl.textContent = message;
+            overlay.classList.add('active');
+
+            function cleanup(result) {
+                overlay.classList.remove('active');
+                btnConfirm.removeEventListener('click', onConfirm);
+                btnCancel.removeEventListener('click', onCancel);
+                overlay.removeEventListener('click', onOverlay);
+                resolve(result);
+            }
+
+            function onConfirm() { cleanup(true); }
+            function onCancel() { cleanup(false); }
+            function onOverlay(e) {
+                if (e.target === overlay) cleanup(false);
+            }
+
+            btnConfirm.addEventListener('click', onConfirm);
+            btnCancel.addEventListener('click', onCancel);
+            overlay.addEventListener('click', onOverlay);
+        });
+    }
+
     // ========== SCREEN NAVIGATION ==========
 
     function showScreen(screenId) {
@@ -819,8 +851,9 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         }
     }
 
-    function stopMeditation() {
-        if (!confirm('Opravdu chcete ukončit meditaci?')) return;
+    async function stopMeditation() {
+        const confirmed = await showConfirm('Opravdu chcete ukončit meditaci?');
+        if (!confirmed) return;
         clearInterval(state.timerInterval);
         clearPendingTimeouts();
         clearManualAdvance();
@@ -935,8 +968,9 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
             SoundEngine.playBell(settings.bellType, 1);
         });
 
-        $('#btnResetStats').addEventListener('click', () => {
-            if (confirm('Opravdu vynulovat všechny statistiky?')) {
+        $('#btnResetStats').addEventListener('click', async () => {
+            const confirmed = await showConfirm('Opravdu vynulovat všechny statistiky?');
+            if (confirmed) {
                 localStorage.removeItem('kum-stats');
                 updateStreakDisplay();
             }

@@ -1240,3 +1240,98 @@ html, body {
 .no-scroll {
     overflow: hidden;
 }
+
+/* ==========================================
+   CUSTOM CONFIRM MODAL
+   ========================================== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-dialog {
+    background: var(--color-bg-meditation);
+    border: 1px solid rgba(201, 162, 39, 0.25);
+    border-radius: var(--radius);
+    padding: 32px 28px 24px;
+    max-width: 340px;
+    width: calc(100% - 48px);
+    text-align: center;
+    transform: scale(0.92);
+    transition: transform 0.25s ease;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+}
+
+.modal-overlay.active .modal-dialog {
+    transform: scale(1);
+}
+
+.modal-message {
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--color-cream);
+    line-height: 1.6;
+    margin-bottom: 28px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.modal-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+    border: 1.5px solid transparent;
+}
+
+.modal-btn-cancel {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: rgba(245, 240, 232, 0.6);
+}
+
+.modal-btn-cancel:active {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.modal-btn-confirm {
+    background: var(--color-gold);
+    color: var(--color-bg-meditation);
+    border-color: var(--color-gold);
+}
+
+.modal-btn-confirm:active {
+    background: #b89220;
+}
+
+@media (min-width: 900px) {
+    .modal-btn-cancel:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: var(--color-cream);
+    }
+    .modal-btn-confirm:hover {
+        background: #d4ac2b;
+    }
+}
