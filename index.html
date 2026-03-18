@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Meditace - Zenová škola Kwan Um</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0A0F47">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="Každodenní 15minutová meditace - Zenová škola Kwan Um">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ==================== SPLASH SCREEN ==================== -->
+    <div id="screen-splash" class="screen active">
+        <div class="splash-content">
+            <svg class="splash-enso" viewBox="0 0 200 200" width="160" height="160">
+                <path class="enso-path" d="M 100 20 C 145 20, 180 55, 180 100 C 180 145, 145 180, 100 180 C 55 180, 20 145, 20 100 C 20 55, 50 25, 90 20" fill="none" stroke="#c9a227" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+            <h1 class="splash-title">Zenová škola<br>Kwan Um</h1>
+            <p class="splash-subtitle">Každodenní meditace</p>
+        </div>
+    </div>
+
+    <!-- ==================== HOME SCREEN ==================== -->
+    <div id="screen-home" class="screen">
+        <div class="home-header">
+            <svg class="home-enso" viewBox="0 0 200 200" width="64" height="64">
+                <path d="M 100 20 C 145 20, 180 55, 180 100 C 180 145, 145 180, 100 180 C 55 180, 20 145, 20 100 C 20 55, 50 25, 90 20" fill="none" stroke="#c9a227" stroke-width="5" stroke-linecap="round"/>
+            </svg>
+            <h2 class="home-school-name">Zenová škola Kwan Um</h2>
+        </div>
+
+        <div class="home-main">
+            <p class="home-label">Doba sezení v tichosti</p>
+
+            <div class="wheel-container">
+                <div class="wheel-overlay-top"></div>
+                <div class="wheel-overlay-bottom"></div>
+                <div class="wheel-highlight"></div>
+                <div class="wheel-scroll" id="wheelScroll">
+                    <!-- Dynamically filled by JS -->
+                </div>
+            </div>
+
+            <div class="home-total-time">
+                <span class="total-label">Odhad bez sútry:</span>
+                <span class="total-value" id="totalTime">14 min 30 s</span>
+            </div>
+
+            <button class="btn-start" id="btnStart">
+                <svg class="btn-start-icon" viewBox="0 0 24 24" width="24" height="24">
+                    <path d="M8 5v14l11-7z" fill="currentColor"/>
+                </svg>
+                Začít meditaci
+            </button>
+
+            <div class="quick-presets">
+                <button class="preset-btn" data-minutes="5">5 min</button>
+                <button class="preset-btn active" data-minutes="10">10 min</button>
+                <button class="preset-btn" data-minutes="15">15 min</button>
+                <button class="preset-btn" data-minutes="20">20 min</button>
+                <button class="preset-btn" data-minutes="30">30 min</button>
+            </div>
+
+            <div class="bow-count-toggle">
+                <button class="bow-count-btn" data-count="3">3 poklony</button>
+                <button class="bow-count-btn active" data-count="9">9 poklon</button>
+                <button class="bow-count-btn" data-count="27">27 poklon</button>
+                <button class="bow-count-btn" data-count="108">108 poklon</button>
+            </div>
+
+            <div class="bow-speed-toggle">
+                <button class="bow-speed-btn active" data-speed="slow">Pomalé poklony</button>
+                <button class="bow-speed-btn" data-speed="fast">Rychlé poklony</button>
+            </div>
+        </div>
+
+        <div class="home-footer">
+            <div class="streak-display" id="streakDisplay">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                    <circle cx="12" cy="12" r="10" fill="none" stroke="#c9a227" stroke-width="2"/>
+                    <path d="M12 6v6l4 2" fill="none" stroke="#c9a227" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span id="streakCount">0 dní</span>
+            </div>
+            <div class="home-actions">
+                <button class="icon-btn" id="btnSettings" aria-label="Nastavení">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97s-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1s.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.58 1.69-.98l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66z" fill="currentColor"/>
+                    </svg>
+                </button>
+                <button class="icon-btn" id="btnAbout" aria-label="O škole">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="currentColor"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MEDITATION SCREEN ==================== -->
+    <div id="screen-meditation" class="screen">
+        <!-- Phase indicator -->
+        <div class="phase-indicator">
+            <div class="phase-dot" data-phase="0"></div>
+            <div class="phase-dot" data-phase="1"></div>
+            <div class="phase-dot" data-phase="2"></div>
+            <div class="phase-dot" data-phase="3"></div>
+            <div class="phase-dot" data-phase="4"></div>
+        </div>
+
+        <h2 class="phase-title" id="phaseTitle">Čtyři velké sliby</h2>
+
+        <!-- Phase content area -->
+        <div class="phase-content" id="phaseContent">
+            <!-- Dynamically filled -->
+        </div>
+
+        <!-- Ensō timer (for sitting meditation) -->
+        <div class="enso-timer" id="ensoTimer" style="display:none">
+            <svg class="enso-timer-svg" viewBox="0 0 300 300">
+                <circle class="enso-bg" cx="150" cy="150" r="130" fill="none" stroke="rgba(201,162,39,0.1)" stroke-width="5"/>
+                <circle class="enso-progress" id="ensoProgress" cx="150" cy="150" r="130" fill="none" stroke="#c9a227" stroke-width="5" stroke-linecap="round" transform="rotate(-90 150 150)"/>
+            </svg>
+            <div class="enso-timer-text">
+                <span class="timer-remaining" id="timerRemaining">5:00</span>
+                <span class="timer-label" id="timerLabel">meditace v sedě</span>
+                <span class="timer-end-time" id="timerEndTime"></span>
+            </div>
+        </div>
+
+        <!-- Simple timer (for other phases) -->
+        <div class="simple-timer" id="simpleTimer">
+            <span class="simple-timer-value" id="simpleTimerValue">0:20</span>
+        </div>
+
+        <!-- Controls -->
+        <div class="meditation-controls">
+            <button class="control-btn" id="btnPause" aria-label="Pozastavit">
+                <svg viewBox="0 0 24 24" width="32" height="32">
+                    <rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor" class="pause-icon"/>
+                    <rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor" class="pause-icon"/>
+                    <path d="M8 5v14l11-7z" fill="currentColor" class="play-icon" style="display:none"/>
+                </svg>
+            </button>
+            <button class="control-btn control-btn-skip" id="btnSkip" aria-label="Přeskočit krok">
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                    <path d="M6 6l8 6-8 6V6zm9 0h3v12h-3V6z" fill="currentColor"/>
+                </svg>
+            </button>
+            <button class="control-btn control-btn-stop" id="btnStop" aria-label="Ukončit">
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                    <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== COMPLETE SCREEN ==================== -->
+    <div id="screen-complete" class="screen">
+        <div class="complete-content">
+            <svg class="complete-enso" viewBox="0 0 200 200" width="140" height="140">
+                <path d="M 100 20 C 145 20, 180 55, 180 100 C 180 145, 145 180, 100 180 C 55 180, 20 145, 20 100 C 20 55, 50 25, 90 20" fill="none" stroke="#c9a227" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+            <h2 class="complete-title">Meditace dokončena</h2>
+            <div class="complete-stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="statDuration">15:00</span>
+                    <span class="stat-label">celkový čas</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="statSitting">5:00</span>
+                    <span class="stat-label">sezení v tichosti</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="statStreak">1</span>
+                    <span class="stat-label">dní v řadě</span>
+                </div>
+            </div>
+            <blockquote class="complete-quote" id="completeQuote">
+                <p></p>
+                <cite></cite>
+            </blockquote>
+            <button class="btn-start" id="btnBackHome">Zpět na úvod</button>
+        </div>
+    </div>
+
+    <!-- ==================== SETTINGS SCREEN ==================== -->
+    <div id="screen-settings" class="screen">
+        <div class="screen-header">
+            <button class="back-btn" id="btnBackFromSettings">
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                    <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="currentColor"/>
+                </svg>
+            </button>
+            <h2>Nastavení</h2>
+        </div>
+        <div class="settings-content">
+            <div class="setting-group">
+                <h3>Zvuk</h3>
+                <div class="setting-row">
+                    <label>Typ zvonku</label>
+                    <select id="settingBellType">
+                        <option value="singing-bowl">Tibetská mísa</option>
+                        <option value="temple-bell">Chrámový zvon</option>
+                        <option value="deep-bell">Hluboký zvon</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label>Hlasitost</label>
+                    <input type="range" id="settingVolume" min="0" max="100" value="70">
+                </div>
+                <div class="setting-row">
+                    <label>Intervalový zvoneček při sezení</label>
+                    <select id="settingInterval">
+                        <option value="0">Vypnuto</option>
+                        <option value="1">Každou minutu</option>
+                        <option value="2">Každé 2 minuty</option>
+                        <option value="5" selected>Každých 5 minut</option>
+                        <option value="10">Každých 10 minut</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <button class="btn-test-sound" id="btnTestSound">Vyzkoušet zvuk</button>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3>Zobrazení</h3>
+                <div class="setting-row">
+                    <label>Velikost textu súter</label>
+                    <select id="settingFontSize">
+                        <option value="small">Malé</option>
+                        <option value="medium" selected>Střední</option>
+                        <option value="large">Velké</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label>Obrazovka při sezení</label>
+                    <select id="settingScreenWake">
+                        <option value="on" selected>Stále zapnutá</option>
+                        <option value="off">Může se vypnout</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3>Meditace</h3>
+                <div class="setting-row">
+                    <label>Počet poklon</label>
+                    <select id="settingBowCount">
+                        <option value="3">3</option>
+                        <option value="6">6</option>
+                        <option value="9" selected>9</option>
+                        <option value="27">27</option>
+                        <option value="108">108</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label>Rychlost poklon</label>
+                    <select id="settingBowSpeed">
+                        <option value="slow" selected>Pomalá</option>
+                        <option value="fast">Rychlá</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label>Automatický přechod mezi fázemi</label>
+                    <select id="settingAutoAdvance">
+                        <option value="auto" selected>Automaticky</option>
+                        <option value="manual">Ručně (klepnutím)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3>Data</h3>
+                <div class="setting-row">
+                    <button class="btn-danger" id="btnResetStats">Vynulovat statistiky</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== ABOUT SCREEN ==================== -->
+    <div id="screen-about" class="screen">
+        <div class="screen-header">
+            <button class="back-btn" id="btnBackFromAbout">
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                    <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="currentColor"/>
+                </svg>
+            </button>
+            <h2>O škole</h2>
+        </div>
+        <div class="about-content">
+            <svg class="about-enso" viewBox="0 0 200 200" width="100" height="100">
+                <path d="M 100 20 C 145 20, 180 55, 180 100 C 180 145, 145 180, 100 180 C 55 180, 20 145, 20 100 C 20 55, 50 25, 90 20" fill="none" stroke="#c9a227" stroke-width="5" stroke-linecap="round"/>
+            </svg>
+
+            <h3>Zenová škola Kwan Um</h3>
+            <p>
+                „Kwan Um" pochází z korejštiny a znamená „vnímat zvuk světa".
+                Odkazuje na bódhisattvu soucitu Kwan Seum Bosal, která „vnímá pláč tohoto světa".
+            </p>
+            <p>
+                Školu založil v roce 1983 zenový mistr Seung Sahn, 78. zenový patriarcha
+                a první korejský zenový mistr, který učil na Západě. Škola dnes zahrnuje
+                více než 100 center a skupin po celém světě.
+            </p>
+            <p>
+                Zenová praxe je přístupná všem bez ohledu na víru, národnost, věk či orientaci.
+            </p>
+
+            <h3>Centra v České republice</h3>
+            <ul class="center-list">
+                <li><strong>Vražné</strong> — hlavní centrum a klášter</li>
+                <li><strong>Praha</strong></li>
+                <li><strong>Brno</strong></li>
+                <li><strong>Liberec</strong></li>
+                <li><strong>Olomouc</strong></li>
+                <li><strong>Děčín</strong></li>
+                <li><strong>Hodonín</strong></li>
+                <li><strong>Tábor</strong></li>
+                <li><strong>Zlín</strong></li>
+            </ul>
+
+            <h3>Kontakt</h3>
+            <div class="about-links">
+                <a href="https://www.kwanumzen.cz" target="_blank" rel="noopener">www.kwanumzen.cz</a>
+                <a href="mailto:zen.liberec@gmail.com">zen.liberec@gmail.com</a>
+                <a href="https://www.vraznezen.org" target="_blank" rel="noopener">www.vraznezen.org</a>
+                <a href="https://zenspirit.cz" target="_blank" rel="noopener">E-shop zenspirit.cz</a>
+            </div>
+
+            <p class="about-version">Verze 1.0 &middot; 2026</p>
+        </div>
+    </div>
+
+    <script src="sounds.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
