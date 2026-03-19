@@ -140,7 +140,7 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
             title: 'Meditace v sedě',
             duration: null, // set from wheel
             bellsBefore: 3,
-            bellsAfter: 2,
+            bellsAfter: 3,
             type: 'sitting',
         },
         {
@@ -176,7 +176,7 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         const defaults = {
             bellType: 'singing-bowl',
             volume: 70,
-            intervalMinutes: 5,
+            intervalMinutes: 0,
             fontSize: 'medium',
             screenWake: 'on',
             autoAdvance: 'auto',
@@ -633,21 +633,12 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
 
     // ========== PHASE TIMER ==========
 
-    let intervalBellNext = 0;
-
     function startPhaseTimer() {
         clearInterval(state.timerInterval);
 
         const phase = PHASES[state.currentPhase];
         const totalDuration = phase.duration;
         let elapsed = totalDuration - state.phaseTimeLeft;
-
-        // Interval bell setup for sitting phase
-        if (phase.type === 'sitting' && settings.intervalMinutes > 0) {
-            intervalBellNext = settings.intervalMinutes * 60;
-        } else {
-            intervalBellNext = 0;
-        }
 
         // Bow timer setup
         if (phase.id === 'bows') {
@@ -678,15 +669,6 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
                     SoundEngine.playWoodBlock();
                     updateBowDisplay();
                 }
-            }
-
-            // Interval bells for sitting
-            if (phase.type === 'sitting' && intervalBellNext > 0 && elapsed >= intervalBellNext) {
-                // Don't play too close to the end
-                if (state.phaseTimeLeft > 30) {
-                    SoundEngine.playBell(settings.bellType, 1);
-                }
-                intervalBellNext += settings.intervalMinutes * 60;
             }
 
             // Phase complete
@@ -894,7 +876,6 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
     function initSettingsUI() {
         $('#settingBellType').value = settings.bellType;
         $('#settingVolume').value = settings.volume;
-        $('#settingInterval').value = settings.intervalMinutes;
         $('#settingFontSize').value = settings.fontSize;
         $('#settingScreenWake').value = settings.screenWake;
         $('#settingBowCount').value = settings.bowCount;
@@ -911,11 +892,6 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         $('#settingVolume').addEventListener('input', (e) => {
             settings.volume = parseInt(e.target.value);
             SoundEngine.setVolume(settings.volume / 100);
-            saveSettings(settings);
-        });
-
-        $('#settingInterval').addEventListener('change', (e) => {
-            settings.intervalMinutes = parseInt(e.target.value);
             saveSettings(settings);
         });
 
