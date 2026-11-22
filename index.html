@@ -118,6 +118,10 @@
         <!-- Chant picker + recording player (sutra phase only) -->
         <div class="chant-bar" id="chantBar" style="display:none">
             <select id="chantSelect" aria-label="Výběr zpěvu"></select>
+            <div class="chant-mode" id="chantMode" style="display:none">
+                <button class="chant-mode-btn" data-mode="solo">Zpívám sám</button>
+                <button class="chant-mode-btn" data-mode="audio">Zpívám s nahrávkou</button>
+            </div>
             <div class="chant-player" id="chantPlayer" style="display:none">
                 <button class="chant-play-btn" id="btnChantPlay" aria-label="Přehrát nebo pozastavit nahrávku">
                     <svg viewBox="0 0 24 24" width="22" height="22">

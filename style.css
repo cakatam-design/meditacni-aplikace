@@ -1383,6 +1383,29 @@ html, body {
     color: #1a1a2e;
 }
 
+.chant-mode {
+    gap: 8px;
+}
+
+.chant-mode-btn {
+    flex: 1;
+    min-height: 40px;
+    padding: 8px 10px;
+    background: rgba(245, 240, 232, 0.06);
+    color: rgba(245, 240, 232, 0.7);
+    border: 1.5px solid rgba(245, 240, 232, 0.2);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.chant-mode-btn.active {
+    background: var(--color-gold-dim);
+    border-color: var(--color-gold);
+    color: var(--color-gold);
+    font-weight: 600;
+}
+
 .chant-player {
     align-items: center;
     gap: 10px;

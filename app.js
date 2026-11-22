@@ -141,6 +141,7 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
             duration: null, // set from wheel
             bellsBefore: 3,
             bellsAfter: 3,
+            bellType: 'chukpi', // sezení se vždy začíná i končí třemi údery čukpi
             type: 'sitting',
         },
         {
@@ -187,6 +188,7 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
             sittingMinutes: 10,
             bowCount: 9,
             bowSpeed: 'slow',
+            chantMode: 'audio',
         };
         try {
             const saved = JSON.parse(localStorage.getItem('kum-settings'));
@@ -478,7 +480,7 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
 
         // Play bells before phase
         if (phase.bellsBefore > 0) {
-            const bellDuration = SoundEngine.playBell(settings.bellType, phase.bellsBefore);
+            const bellDuration = SoundEngine.playBell(phase.bellType || settings.bellType, phase.bellsBefore);
             // Start countdown after bells finish
             queueTimeout(() => {
                 if (!isManualPhase) {
@@ -599,9 +601,21 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
 
         select.addEventListener('change', () => {
             renderChant(select.value);
-            if (select.value !== CZECH_SUTRA_ID) {
+            if (state.chant && settings.chantMode === 'audio') {
                 audio.play().catch(() => {});
             }
+        });
+
+        // Zpívám sám (jen text) / Zpívám s nahrávkou
+        $$('.chant-mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                settings.chantMode = btn.dataset.mode;
+                saveSettings(settings);
+                renderChant(select.value);
+                if (state.chant && settings.chantMode === 'audio') {
+                    audio.play().catch(() => {});
+                }
+            });
         });
 
         $('#btnChantPlay').addEventListener('click', () => {
@@ -671,6 +685,12 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         stopChant();
         state.chant = chant;
 
+        const withAudio = settings.chantMode === 'audio';
+        $('#chantMode').style.display = chant ? 'flex' : 'none';
+        $$('.chant-mode-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === settings.chantMode);
+        });
+
         if (!chant) {
             $('#phaseTitle').textContent = PHASES[state.currentPhase].title;
             $('#chantPlayer').style.display = 'none';
@@ -681,15 +701,17 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         } else {
             const audio = $('#chantAudio');
             state.chantTrack = 0;
-            audio.src = getChantTracks()[0];
-            audio.volume = settings.volume / 100;
+            if (withAudio) {
+                audio.src = getChantTracks()[0];
+                audio.volume = settings.volume / 100;
+            }
             $('#phaseTitle').textContent = chant.title;
-            $('#chantPlayer').style.display = 'flex';
+            $('#chantPlayer').style.display = withAudio ? 'flex' : 'none';
             const pagesHtml = chant.pages.map(p =>
                 `<img class="chant-page" src="${p.src}" width="${p.w}" height="${p.h}" alt="${escapeHtml(chant.title)} — stránka zpěvníku">`
             ).join('');
             content.innerHTML = `<div class="phase-text phase-text-scrollable phase-transition-enter">
-                <p class="phase-note">Text se posouvá podle nahrávky. Po skončení zpěvu přeskočte krok.</p>
+                <p class="phase-note">${withAudio ? 'Text se posouvá podle nahrávky.' : 'Zpívejte vlastním tempem a text si posouvejte sami.'} Po skončení zpěvu přeskočte krok.</p>
                 ${pagesHtml}
             </div>`;
             setChantFollow(true);
@@ -887,7 +909,7 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
 
         // Play bells after phase
         if (phase.bellsAfter > 0) {
-            SoundEngine.playBell(settings.bellType, phase.bellsAfter);
+            SoundEngine.playBell(phase.bellType || settings.bellType, phase.bellsAfter);
         }
 
         // Remove breathing glow
