@@ -170,6 +170,7 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         manualAdvanceHandler: null,
         chant: null,
         chantFollow: true,
+        chantTrack: 0,
         chantFrame: null,
     };
 
@@ -612,10 +613,24 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         });
 
         $('#chantSeek').addEventListener('input', (e) => {
-            if (audio.duration) {
-                audio.currentTime = (e.target.value / 1000) * audio.duration;
-                setChantFollow(true);
+            const total = getChantTotal();
+            if (!total) return;
+            // Find the track the position falls into (a chant can span several recordings)
+            let offset = (e.target.value / 1000) * total;
+            const durations = getChantDurations();
+            let track = 0;
+            while (track < durations.length - 1 && offset >= durations[track]) {
+                offset -= durations[track];
+                track++;
             }
+            if (track !== state.chantTrack) {
+                const wasPlaying = !audio.paused;
+                state.chantTrack = track;
+                audio.src = getChantTracks()[track];
+                if (wasPlaying) audio.play().catch(() => {});
+            }
+            audio.currentTime = offset;
+            setChantFollow(true);
         });
 
         $('#btnChantFollow').addEventListener('click', () => setChantFollow(true));
@@ -637,7 +652,16 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         audio.addEventListener('timeupdate', updateChantTime);
         audio.addEventListener('loadedmetadata', updateChantTime);
         audio.addEventListener('ended', () => {
-            if (state.chant && settings.autoAdvance === 'auto') skipPhase();
+            if (!state.chant) return;
+            const tracks = getChantTracks();
+            if (state.chantTrack < tracks.length - 1) {
+                // Next recording of the same chant follows immediately
+                state.chantTrack++;
+                audio.src = tracks[state.chantTrack];
+                audio.play().catch(() => {});
+            } else if (settings.autoAdvance === 'auto') {
+                skipPhase();
+            }
         });
     }
 
@@ -656,7 +680,8 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
             </div>`;
         } else {
             const audio = $('#chantAudio');
-            audio.src = chant.audio;
+            state.chantTrack = 0;
+            audio.src = getChantTracks()[0];
             audio.volume = settings.volume / 100;
             $('#phaseTitle').textContent = chant.title;
             $('#chantPlayer').style.display = 'flex';
@@ -694,11 +719,29 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         $('.chant-pause-icon').style.display = playing ? 'block' : 'none';
     }
 
+    function getChantTracks() {
+        return [].concat(state.chant.audio);
+    }
+
+    function getChantDurations() {
+        return state.chant.durations || [$('#chantAudio').duration || 0];
+    }
+
+    function getChantTotal() {
+        return state.chant ? getChantDurations().reduce((sum, d) => sum + d, 0) : 0;
+    }
+
+    // Position within the whole chant, including recordings already played
+    function getChantPosition() {
+        const played = getChantDurations().slice(0, state.chantTrack).reduce((sum, d) => sum + d, 0);
+        return played + $('#chantAudio').currentTime;
+    }
+
     function updateChantTime() {
-        const audio = $('#chantAudio');
-        const duration = audio.duration || 0;
-        $('#chantTime').textContent = `${formatTime(Math.floor(audio.currentTime))} / ${formatTime(Math.floor(duration))}`;
-        $('#chantSeek').value = duration ? Math.round((audio.currentTime / duration) * 1000) : 0;
+        const total = getChantTotal();
+        const position = total ? getChantPosition() : 0;
+        $('#chantTime').textContent = `${formatTime(Math.floor(position))} / ${formatTime(Math.floor(total))}`;
+        $('#chantSeek').value = total ? Math.round((position / total) * 1000) : 0;
     }
 
     // Scroll position for a given fraction of the recording: each zpěvník page
@@ -725,8 +768,9 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
     function chantTick() {
         const audio = $('#chantAudio');
         if (!state.chant || audio.paused) return;
-        if (state.chantFollow && audio.duration) {
-            $('#phaseContent').scrollTop = getChantScrollTop(audio.currentTime / audio.duration);
+        const total = getChantTotal();
+        if (state.chantFollow && total) {
+            $('#phaseContent').scrollTop = getChantScrollTop(Math.min(getChantPosition() / total, 1));
         }
         state.chantFrame = requestAnimationFrame(chantTick);
     }

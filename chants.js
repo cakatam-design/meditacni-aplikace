@@ -1,5 +1,6 @@
 /* Zpěvy ze zpěvníku Zenové školy Kwan Um: nahrávka + stránky zpěvníku.
-   chars = množství textu na stránce (váha pro posun textu podle nahrávky). */
+   chars = množství textu na stránce (váha pro posun textu podle nahrávky).
+   audio může být pole nahrávek přehrávaných za sebou; durations jsou pak jejich délky v sekundách. */
 
 const CHANTS = [
   {
@@ -117,23 +118,17 @@ const CHANTS = [
     ]
   },
   {
-    "id": "tisic-oci-1",
-    "title": "Sútra tisíce očí a rukou 1",
-    "audio": "audio/7.mp3",
+    "id": "tisic-oci",
+    "title": "Sútra tisíce očí a rukou",
+    "audio": ["audio/7.mp3", "audio/8.mp3"],
+    "durations": [96.87, 732.13],
     "pages": [
       {
         "src": "zpevnik/p20.png",
         "w": 899,
         "h": 1161,
         "chars": 617
-      }
-    ]
-  },
-  {
-    "id": "tisic-oci-2",
-    "title": "Sútra tisíce očí a rukou 2",
-    "audio": "audio/8.mp3",
-    "pages": [
+      },
       {
         "src": "zpevnik/p21.png",
         "w": 835,
