@@ -340,8 +340,18 @@ const SoundEngine = (() => {
         getContext();
     }
 
+    // Silence everything already playing or scheduled; later sounds use a fresh output
+    function stopAll() {
+        if (!audioCtx) return;
+        masterGain.disconnect();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = volume;
+        masterGain.connect(audioCtx.destination);
+    }
+
     return {
         setVolume,
+        stopAll,
         playBell,
         playWoodBlock,
         unlock,

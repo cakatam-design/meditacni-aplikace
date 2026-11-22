@@ -192,7 +192,10 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         };
         try {
             const saved = JSON.parse(localStorage.getItem('kum-settings'));
-            return { ...defaults, ...saved };
+            const merged = { ...defaults, ...saved };
+            // Čukpi patří jen k sezení, jako typ zvonku se už nenabízí
+            if (merged.bellType === 'chukpi') merged.bellType = defaults.bellType;
+            return merged;
         } catch {
             return defaults;
         }
@@ -596,8 +599,7 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
     function initChantBar() {
         const select = $('#chantSelect');
         const audio = $('#chantAudio');
-        const options = [{ id: CZECH_SUTRA_ID, title: 'Sútra srdce (česky) — bez nahrávky' }, ...CHANTS];
-        select.innerHTML = options.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
+        select.innerHTML = CHANTS.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
 
         select.addEventListener('change', () => {
             renderChant(select.value);
@@ -681,39 +683,32 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
 
     function renderChant(id) {
         const content = $('#phaseContent');
-        const chant = CHANTS.find(c => c.id === id) || null;
+        const entry = CHANTS.find(c => c.id === id) || CHANTS[0];
         stopChant();
-        state.chant = chant;
 
-        const withAudio = settings.chantMode === 'audio';
-        $('#chantMode').style.display = chant ? 'flex' : 'none';
+        // state.chant is set only while a recording accompanies the text
+        const hasAudio = !!entry.audio;
+        const withAudio = hasAudio && settings.chantMode === 'audio';
+        state.chant = withAudio ? entry : null;
+
+        $('#chantMode').style.display = hasAudio ? 'flex' : 'none';
         $$('.chant-mode-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.mode === settings.chantMode);
         });
+        $('#phaseTitle').textContent = hasAudio ? entry.title : PHASES[state.currentPhase].title;
+        $('#chantPlayer').style.display = withAudio ? 'flex' : 'none';
 
-        if (!chant) {
-            $('#phaseTitle').textContent = PHASES[state.currentPhase].title;
-            $('#chantPlayer').style.display = 'none';
-            content.innerHTML = `<div class="phase-text phase-text-scrollable phase-transition-enter">
-                <p class="phase-note">Postupujte vlastním tempem. Až dokončíte zpěv nebo čtení, přeskočte krok.</p>
-                <img class="sutra-image" src="Obrázky/česká sutra.jpg" alt="Sútra srdce">
-            </div>`;
-        } else {
+        // entry.html is generated from the school's zpěvník (see chants.js)
+        content.innerHTML = `<div class="phase-text phase-text-scrollable phase-transition-enter">
+            <p class="phase-note">${withAudio ? 'Text se posouvá podle nahrávky.' : 'Zpívejte vlastním tempem a text si posouvejte sami.'} Po skončení zpěvu přeskočte krok.</p>
+            <div class="chant-text" id="chantText">${entry.html}</div>
+        </div>`;
+
+        if (withAudio) {
             const audio = $('#chantAudio');
             state.chantTrack = 0;
-            if (withAudio) {
-                audio.src = getChantTracks()[0];
-                audio.volume = settings.volume / 100;
-            }
-            $('#phaseTitle').textContent = chant.title;
-            $('#chantPlayer').style.display = withAudio ? 'flex' : 'none';
-            const pagesHtml = chant.pages.map(p =>
-                `<img class="chant-page" src="${p.src}" width="${p.w}" height="${p.h}" alt="${escapeHtml(chant.title)} — stránka zpěvníku">`
-            ).join('');
-            content.innerHTML = `<div class="phase-text phase-text-scrollable phase-transition-enter">
-                <p class="phase-note">${withAudio ? 'Text se posouvá podle nahrávky.' : 'Zpívejte vlastním tempem a text si posouvejte sami.'} Po skončení zpěvu přeskočte krok.</p>
-                ${pagesHtml}
-            </div>`;
+            audio.src = getChantTracks()[0];
+            audio.volume = settings.volume / 100;
             setChantFollow(true);
             updateChantTime();
         }
@@ -766,23 +761,13 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         $('#chantSeek').value = total ? Math.round((position / total) * 1000) : 0;
     }
 
-    // Scroll position for a given fraction of the recording: each zpěvník page
-    // gets a share of the time proportional to the amount of text on it.
+    // Scroll position for a given fraction of the recording: the text moves
+    // evenly from its first line to its last over the length of the recording.
     function getChantScrollTop(fraction) {
         const content = $('#phaseContent');
-        const pages = content.querySelectorAll('.chant-page');
-        const totalChars = state.chant.pages.reduce((sum, p) => sum + p.chars, 0);
-        let remaining = fraction * totalChars;
-        let y = 0;
-        for (let i = 0; i < pages.length; i++) {
-            const chars = state.chant.pages[i].chars;
-            const pageTop = pages[i].getBoundingClientRect().top - content.getBoundingClientRect().top + content.scrollTop;
-            if (remaining <= chars || i === pages.length - 1) {
-                y = pageTop + Math.min(remaining / chars, 1) * pages[i].offsetHeight;
-                break;
-            }
-            remaining -= chars;
-        }
+        const text = $('#chantText');
+        const textTop = text.getBoundingClientRect().top - content.getBoundingClientRect().top + content.scrollTop;
+        const y = textTop + fraction * text.offsetHeight;
         const max = content.scrollHeight - content.clientHeight;
         return Math.max(0, Math.min(max, y - content.clientHeight * 0.4));
     }
@@ -1046,6 +1031,7 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         clearPendingTimeouts();
         clearManualAdvance();
         stopChant();
+        SoundEngine.stopAll();
         releaseWakeLock();
         showScreen('home');
 
@@ -1055,6 +1041,8 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         clearInterval(state.timerInterval);
         clearPendingTimeouts();
         clearManualAdvance();
+        // Bells/čukpi already scheduled for the skipped phase must not ring into the next one
+        SoundEngine.stopAll();
 
         const svgEl = $('.enso-timer-svg');
         if (svgEl) svgEl.classList.remove('breathing-pulse');

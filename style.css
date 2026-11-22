@@ -1449,10 +1449,32 @@ html, body {
     cursor: pointer;
 }
 
-.chant-page {
-    display: block;
-    width: 100%;
+/* Zpěvník as real text: follows the font size setting and wraps on narrow screens */
+.chant-text {
+    text-align: center;
+    font-size: 1.15em;
+    line-height: 1.6;
+    font-weight: 400;
+    font-family: Georgia, 'Times New Roman', serif;
+}
+
+.chant-text .nb {
+    white-space: nowrap;
+}
+
+.chant-text .cl.gap {
+    margin-top: 1.1em;
+}
+
+.chant-text .cl.ct {
+    font-size: 1.2em;
+}
+
+.chant-text .mk {
+    display: inline-block;
     height: auto;
+    max-width: 100%;
+    vertical-align: middle;
 }
 
 .phase-text .reading-source {
