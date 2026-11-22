@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kum-meditation-v1';
+const CACHE_NAME = 'kum-meditation-v2';
 const ASSETS = [
     './',
     './index.html',
@@ -29,18 +29,17 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// Fetch: cache-first strategy
+// Fetch: network-first strategy (cache is the offline fallback)
 self.addEventListener('fetch', (event) => {
+    if (event.request.method !== 'GET') return;
     event.respondWith(
-        caches.match(event.request).then((cached) => {
-            return cached || fetch(event.request).then((response) => {
-                // Cache new successful requests
-                if (response.status === 200) {
-                    const clone = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-                }
-                return response;
-            });
-        })
+        fetch(event.request, { cache: 'no-cache' }).then((response) => {
+            // Keep the offline copy up to date
+            if (response.status === 200) {
+                const clone = response.clone();
+                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            }
+            return response;
+        }).catch(() => caches.match(event.request))
     );
 });
