@@ -5,6 +5,8 @@ const ASSETS = [
     './style.css',
     './app.js',
     './sounds.js',
+    './readings.js',
+    './chants.js',
     './icon.svg',
     './manifest.json',
 ];
@@ -32,6 +34,8 @@ self.addEventListener('activate', (event) => {
 // Fetch: network-first strategy (cache is the offline fallback)
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
+    // Recordings are streamed (range requests) straight from the network
+    if (new URL(event.request.url).pathname.endsWith('.mp3')) return;
     event.respondWith(
         fetch(event.request, { cache: 'no-cache' }).then((response) => {
             // Keep the offline copy up to date

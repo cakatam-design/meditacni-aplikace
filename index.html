@@ -81,7 +81,12 @@
         </div>
 
         <div class="home-footer">
-            <div></div>
+            <a class="home-link" href="Zrcadlo_dharmy_CZ.pdf" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                    <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z" fill="currentColor"/>
+                </svg>
+                Zrcadlo dharmy
+            </a>
             <div class="home-actions">
                 <button class="icon-btn" id="btnSettings" aria-label="Nastavení">
                     <svg viewBox="0 0 24 24" width="24" height="24">
@@ -109,6 +114,23 @@
         </div>
 
         <h2 class="phase-title" id="phaseTitle">Čtyři velké sliby</h2>
+
+        <!-- Chant picker + recording player (sutra phase only) -->
+        <div class="chant-bar" id="chantBar" style="display:none">
+            <select id="chantSelect" aria-label="Výběr zpěvu"></select>
+            <div class="chant-player" id="chantPlayer" style="display:none">
+                <button class="chant-play-btn" id="btnChantPlay" aria-label="Přehrát nebo pozastavit nahrávku">
+                    <svg viewBox="0 0 24 24" width="22" height="22">
+                        <path d="M8 5v14l11-7z" fill="currentColor" class="chant-play-icon"/>
+                        <path d="M6 5h4v14H6zm8 0h4v14h-4z" fill="currentColor" class="chant-pause-icon" style="display:none"/>
+                    </svg>
+                </button>
+                <input type="range" id="chantSeek" min="0" max="1000" value="0" aria-label="Pozice v nahrávce">
+                <span class="chant-time" id="chantTime">0:00 / 0:00</span>
+                <button class="chant-follow-btn" id="btnChantFollow" style="display:none">Sledovat text</button>
+            </div>
+            <audio id="chantAudio" preload="none"></audio>
+        </div>
 
         <!-- Phase content area -->
         <div class="phase-content" id="phaseContent">
@@ -203,6 +225,7 @@
                         <option value="singing-bowl">Tibetská mísa</option>
                         <option value="temple-bell">Chrámový zvon</option>
                         <option value="deep-bell">Hluboký zvon</option>
+                        <option value="chukpi">Čukpi (bambusová klapačka)</option>
                     </select>
                 </div>
                 <div class="setting-row">
@@ -334,6 +357,8 @@
         </div>
     </div>
 
+    <script src="readings.js"></script>
+    <script src="chants.js"></script>
     <script src="sounds.js"></script>
     <script src="app.js"></script>
 </body>

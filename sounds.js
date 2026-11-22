@@ -257,11 +257,63 @@ const SoundEngine = (() => {
         noise.start(t);
     }
 
+    // --- CHUKPI (bambusová klapačka) ---
+    // Syntetizovaný zvuk: suché, ostré plesknutí rozštípnutého bambusu o dlaň.
+    function playChukpi(startTime) {
+        const ctx = getContext();
+        const t = startTime || ctx.currentTime;
+
+        const output = ctx.createGain();
+        output.gain.value = 1.0;
+        output.connect(masterGain);
+
+        // Dva těsně po sobě jdoucí nárazy (lamely bambusu dosednou postupně)
+        [0, 0.011].forEach((offset, i) => {
+            const noise = ctx.createBufferSource();
+            const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.12), ctx.sampleRate);
+            const data = buf.getChannelData(0);
+            for (let j = 0; j < data.length; j++) {
+                data[j] = Math.random() * 2 - 1;
+            }
+            noise.buffer = buf;
+
+            const band = ctx.createBiquadFilter();
+            band.type = 'bandpass';
+            band.frequency.value = i === 0 ? 1900 : 2600;
+            band.Q.value = 1.2;
+
+            const gain = ctx.createGain();
+            gain.gain.setValueAtTime(i === 0 ? 1.4 : 0.8, t + offset);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + offset + 0.09);
+
+            noise.connect(band);
+            band.connect(gain);
+            gain.connect(output);
+            noise.start(t + offset);
+            noise.stop(t + offset + 0.12);
+        });
+
+        // Krátká rezonance dutého bambusu
+        [{ f: 620, amp: 0.35, decay: 0.07 }, { f: 1450, amp: 0.25, decay: 0.045 }].forEach(p => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = p.f;
+            gain.gain.setValueAtTime(p.amp, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + p.decay);
+            osc.connect(gain);
+            gain.connect(output);
+            osc.start(t);
+            osc.stop(t + p.decay + 0.02);
+        });
+    }
+
     // --- PUBLIC: Play bell by type ---
     const bellFunctions = {
         'singing-bowl': playSingingBowl,
         'temple-bell': playTempleBell,
         'deep-bell': playDeepBell,
+        'chukpi': playChukpi,
     };
 
     function playBell(type, count, delayBetween) {

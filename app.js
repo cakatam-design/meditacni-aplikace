@@ -168,6 +168,9 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         meditationStartTime: null,
         pendingTimeouts: [],
         manualAdvanceHandler: null,
+        chant: null,
+        chantFollow: true,
+        chantFrame: null,
     };
 
     // ========== SETTINGS ==========
@@ -435,10 +438,12 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         clearPendingTimeouts();
         clearManualAdvance();
         clearInterval(state.timerInterval);
+        stopChant();
         state.currentPhase = index;
         const phase = PHASES[index];
         state.phaseTimeLeft = phase.duration;
         state.isPaused = false;
+        $('#chantBar').style.display = phase.id === 'sutra' ? 'flex' : 'none';
 
         // Update phase indicator
         $$('.phase-dot').forEach((dot, i) => {
@@ -554,24 +559,176 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
 
             case 'sutra':
                 content.classList.add('phase-content-scrollable');
-                content.innerHTML = `<div class="phase-text phase-text-scrollable phase-transition-enter">
-                    <p class="phase-note">Postupujte vlastním tempem. Až dokončíte zpěv nebo čtení, přeskočte krok.</p>
-                    <img class="sutra-image" src="Obrázky/česká sutra.jpg" alt="Sútra srdce">
-                </div>`;
-                content.scrollTop = 0;
+                $('#chantSelect').value = CZECH_SUTRA_ID;
+                renderChant(CZECH_SUTRA_ID);
                 break;
 
             case 'reading': {
-                const reading = TEXTS.readings[Math.floor(Math.random() * TEXTS.readings.length)];
-                const textHtml = reading.text.replace(/\n/g, '<br>');
-                content.innerHTML = `<div class="phase-text phase-transition-enter">
-                    <p class="phase-reading-title">${reading.title}</p>
-                    <p class="verse">${textHtml}</p>
-                    <p style="margin-top:1.5em;font-size:0.85em;color:rgba(245,240,232,0.4)">- ${reading.author}</p>
+                const reading = READINGS[Math.floor(Math.random() * READINGS.length)];
+                const parasHtml = reading.p.map(p => {
+                    const cls = p.length < 90 && READING_SOURCE_RE.test(p) ? ' class="reading-source"' : '';
+                    return `<p${cls}>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`;
+                }).join('');
+                content.classList.add('phase-content-scrollable');
+                content.innerHTML = `<div class="phase-text phase-text-scrollable phase-transition-enter">
+                    <p class="phase-reading-title">${escapeHtml(reading.t)}</p>
+                    ${parasHtml}
                 </div>`;
+                content.scrollTop = 0;
                 break;
             }
         }
+    }
+
+    const READING_SOURCE_RE = /^(Zenov[ýá] mist|Z knihy|Ze sbírky|Primary Point|[„"]?.{0,60}JDPSN|.{0,60}SSN$)/;
+
+    function escapeHtml(text) {
+        return text.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    }
+
+    // ========== CHANTS (zpěvník + nahrávky) ==========
+
+    const CZECH_SUTRA_ID = 'sutra-srdce-cz';
+
+    function initChantBar() {
+        const select = $('#chantSelect');
+        const audio = $('#chantAudio');
+        const options = [{ id: CZECH_SUTRA_ID, title: 'Sútra srdce (česky) — bez nahrávky' }, ...CHANTS];
+        select.innerHTML = options.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
+
+        select.addEventListener('change', () => {
+            renderChant(select.value);
+            if (select.value !== CZECH_SUTRA_ID) {
+                audio.play().catch(() => {});
+            }
+        });
+
+        $('#btnChantPlay').addEventListener('click', () => {
+            if (audio.paused) {
+                audio.play().catch(() => {});
+            } else {
+                audio.pause();
+            }
+        });
+
+        $('#chantSeek').addEventListener('input', (e) => {
+            if (audio.duration) {
+                audio.currentTime = (e.target.value / 1000) * audio.duration;
+                setChantFollow(true);
+            }
+        });
+
+        $('#btnChantFollow').addEventListener('click', () => setChantFollow(true));
+
+        // Manual scrolling takes over from the automatic one
+        const content = $('#phaseContent');
+        ['wheel', 'touchstart', 'pointerdown'].forEach(evt => {
+            content.addEventListener(evt, () => {
+                if (state.chant && !audio.paused) setChantFollow(false);
+            }, { passive: true });
+        });
+
+        audio.addEventListener('play', () => {
+            updateChantPlayButton();
+            cancelAnimationFrame(state.chantFrame);
+            state.chantFrame = requestAnimationFrame(chantTick);
+        });
+        audio.addEventListener('pause', updateChantPlayButton);
+        audio.addEventListener('timeupdate', updateChantTime);
+        audio.addEventListener('loadedmetadata', updateChantTime);
+        audio.addEventListener('ended', () => {
+            if (state.chant && settings.autoAdvance === 'auto') skipPhase();
+        });
+    }
+
+    function renderChant(id) {
+        const content = $('#phaseContent');
+        const chant = CHANTS.find(c => c.id === id) || null;
+        stopChant();
+        state.chant = chant;
+
+        if (!chant) {
+            $('#phaseTitle').textContent = PHASES[state.currentPhase].title;
+            $('#chantPlayer').style.display = 'none';
+            content.innerHTML = `<div class="phase-text phase-text-scrollable phase-transition-enter">
+                <p class="phase-note">Postupujte vlastním tempem. Až dokončíte zpěv nebo čtení, přeskočte krok.</p>
+                <img class="sutra-image" src="Obrázky/česká sutra.jpg" alt="Sútra srdce">
+            </div>`;
+        } else {
+            const audio = $('#chantAudio');
+            audio.src = chant.audio;
+            audio.volume = settings.volume / 100;
+            $('#phaseTitle').textContent = chant.title;
+            $('#chantPlayer').style.display = 'flex';
+            const pagesHtml = chant.pages.map(p =>
+                `<img class="chant-page" src="${p.src}" width="${p.w}" height="${p.h}" alt="${escapeHtml(chant.title)} — stránka zpěvníku">`
+            ).join('');
+            content.innerHTML = `<div class="phase-text phase-text-scrollable phase-transition-enter">
+                <p class="phase-note">Text se posouvá podle nahrávky. Po skončení zpěvu přeskočte krok.</p>
+                ${pagesHtml}
+            </div>`;
+            setChantFollow(true);
+            updateChantTime();
+        }
+        content.scrollTop = 0;
+    }
+
+    function stopChant() {
+        const audio = $('#chantAudio');
+        cancelAnimationFrame(state.chantFrame);
+        state.chant = null;
+        audio.pause();
+        audio.removeAttribute('src');
+        audio.load();
+        updateChantPlayButton();
+    }
+
+    function setChantFollow(follow) {
+        state.chantFollow = follow;
+        $('#btnChantFollow').style.display = follow ? 'none' : 'inline-block';
+    }
+
+    function updateChantPlayButton() {
+        const playing = !$('#chantAudio').paused;
+        $('.chant-play-icon').style.display = playing ? 'none' : 'block';
+        $('.chant-pause-icon').style.display = playing ? 'block' : 'none';
+    }
+
+    function updateChantTime() {
+        const audio = $('#chantAudio');
+        const duration = audio.duration || 0;
+        $('#chantTime').textContent = `${formatTime(Math.floor(audio.currentTime))} / ${formatTime(Math.floor(duration))}`;
+        $('#chantSeek').value = duration ? Math.round((audio.currentTime / duration) * 1000) : 0;
+    }
+
+    // Scroll position for a given fraction of the recording: each zpěvník page
+    // gets a share of the time proportional to the amount of text on it.
+    function getChantScrollTop(fraction) {
+        const content = $('#phaseContent');
+        const pages = content.querySelectorAll('.chant-page');
+        const totalChars = state.chant.pages.reduce((sum, p) => sum + p.chars, 0);
+        let remaining = fraction * totalChars;
+        let y = 0;
+        for (let i = 0; i < pages.length; i++) {
+            const chars = state.chant.pages[i].chars;
+            const pageTop = pages[i].getBoundingClientRect().top - content.getBoundingClientRect().top + content.scrollTop;
+            if (remaining <= chars || i === pages.length - 1) {
+                y = pageTop + Math.min(remaining / chars, 1) * pages[i].offsetHeight;
+                break;
+            }
+            remaining -= chars;
+        }
+        const max = content.scrollHeight - content.clientHeight;
+        return Math.max(0, Math.min(max, y - content.clientHeight * 0.4));
+    }
+
+    function chantTick() {
+        const audio = $('#chantAudio');
+        if (!state.chant || audio.paused) return;
+        if (state.chantFollow && audio.duration) {
+            $('#phaseContent').scrollTop = getChantScrollTop(audio.currentTime / audio.duration);
+        }
+        state.chantFrame = requestAnimationFrame(chantTick);
     }
 
     function updateBowDisplay() {
@@ -752,6 +909,7 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         clearInterval(state.timerInterval);
         clearPendingTimeouts();
         clearManualAdvance();
+        stopChant();
         releaseWakeLock();
 
         const totalSeconds = Math.round((Date.now() - state.meditationStartTime) / 1000);
@@ -821,6 +979,7 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         clearInterval(state.timerInterval);
         clearPendingTimeouts();
         clearManualAdvance();
+        stopChant();
         releaseWakeLock();
         showScreen('home');
 
@@ -1037,6 +1196,7 @@ gaté, gaté, paragaté, parasamgaté, bódhi sváhá</p>`,
         updateBowSpeedButtons();
 
         initSettingsUI();
+        initChantBar();
         initEvents();
         initSplash();
         registerSW();
